@@ -2,18 +2,30 @@ services:
   - type: cron
     name: website-monitor
     runtime: python3
-    schedule: "*/30 * * * *"   # runs every 30 minutes
+    schedule: "*/30 * * * *"
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python monitor_multi.py --once"
     envVars:
-      MONITOR_URLS_FILE: "/opt/render/project/src/urls.txt"
-      MONITOR_SMTP_HOST: "smtp.gmail.com"
-      MONITOR_SMTP_PORT: "587"
-      MONITOR_SMTP_USER: "howyoudoingkshitij@gmail.com"
-      MONITOR_SMTP_PASS: "bjhihigwqkrcbyoj"
-      MONITOR_EMAIL_FROM: "howyoudoingkshitij@gmail.com"
-      MONITOR_EMAIL_TO: "howyoudoingkshitij@gmail.com"
-      MONITOR_HTTP_TIMEOUT: "10"
-      MONITOR_HTTP_RETRIES: "2"
-      MONITOR_RETRY_DELAY: "2"
-      MONITOR_CONCURRENCY: "10"
+      - key: MONITOR_URLS_FILE
+        value: "/opt/render/project/src/urls.txt"
+      - key: MONITOR_SMTP_HOST
+        value: "smtp.gmail.com"
+      - key: MONITOR_SMTP_PORT
+        value: "587"
+      - key: MONITOR_SMTP_USER
+        value: "howyoudoingkshitij@gmail.com"
+      - key: MONITOR_SMTP_PASS
+        # value omitted intentionally — set this secret in the Render Dashboard
+        sync: false
+      - key: MONITOR_EMAIL_FROM
+        value: "howyoudoingkshitij@gmail.com"
+      - key: MONITOR_EMAIL_TO
+        value: "howyoudoingkshitij@gmail.com"
+      - key: MONITOR_HTTP_TIMEOUT
+        value: "10"
+      - key: MONITOR_HTTP_RETRIES
+        value: "2"
+      - key: MONITOR_RETRY_DELAY
+        value: "2"
+      - key: MONITOR_CONCURRENCY
+        value: "10"
