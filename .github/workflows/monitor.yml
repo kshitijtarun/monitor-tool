@@ -1,0 +1,71 @@
+name: website-monitor
+
+on:
+  # schedule every 30 minutes
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # needed to commit the state file back
+  id-token: write
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+    env:
+      # repo-local path for urls file and persisted state file
+      MONITOR_URLS_FILE: src/urls.txt
+      MONITOR_STATE_FILE: .github/monitor_state/website_monitor_multi_state.json
+      MONITOR_DATA_DIR: .github/monitor_state
+      # Monitoring defaults (override in repo secrets if desired)
+      MONITOR_HTTP_TIMEOUT: "10"
+      MONITOR_HTTP_RETRIES: "2"
+      MONITOR_RETRY_DELAY: "2"
+      MONITOR_CONCURRENCY: "6"
+    steps:
+      - name: Checkout repo (including state)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Ensure state dir exists
+        run: |
+          mkdir -p .github/monitor_state
+          touch "${{ env.MONITOR_STATE_FILE }}" || true
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run monitor (single pass)
+        env:
+          # secrets go here:
+          MONITOR_SMTP_HOST: smtp.gmail.com
+          MONITOR_SMTP_PORT: "587"
+          MONITOR_SMTP_USER: ${{ secrets.MONITOR_SMTP_USER }}
+          MONITOR_SMTP_PASS: ${{ secrets.MONITOR_SMTP_PASS }}
+          MONITOR_EMAIL_FROM: ${{ secrets.MONITOR_EMAIL_FROM }}
+          MONITOR_EMAIL_TO: ${{ secrets.MONITOR_EMAIL_TO }}
+        run: |
+          python monitor_multi.py --once
+
+      - name: Commit state file back if changed
+        # we only commit state file back to the repo if it changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/monitor_state/ || true
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(monitor): update state file [skip ci]" || true
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+          else
+            echo "No changes to commit"
+          fi
