@@ -1,12 +1,14 @@
 services:
   - type: worker
     name: website-monitor
-    runtime: python3
+    runtime: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python monitor_multi.py"
     envVars:
       - key: MONITOR_URLS_FILE
         value: "src/urls.txt"
+      - key: MONITOR_DATA_DIR
+        value: "src/data"
       - key: MONITOR_SMTP_HOST
         value: "smtp.gmail.com"
       - key: MONITOR_SMTP_PORT
@@ -19,3 +21,11 @@ services:
         value: "howyoudoingkshitij@gmail.com"
       - key: MONITOR_EMAIL_TO
         value: "howyoudoingkshitij@gmail.com"
+      - key: MONITOR_HTTP_TIMEOUT
+        value: "10"
+      - key: MONITOR_HTTP_RETRIES
+        value: "2"
+      - key: MONITOR_RETRY_DELAY
+        value: "2"
+      - key: MONITOR_CONCURRENCY
+        value: "10"
