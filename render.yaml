@@ -1,13 +1,11 @@
 services:
   - type: cron
     name: website-monitor
-    runtime: python3
+    runtime: docker
     schedule: "*/30 * * * *"
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python monitor_multi.py --once"
     envVars:
       - key: MONITOR_URLS_FILE
-        value: "/opt/render/project/src/urls.txt"
+        value: "/app/src/urls.txt"
       - key: MONITOR_SMTP_HOST
         value: "smtp.gmail.com"
       - key: MONITOR_SMTP_PORT
@@ -15,7 +13,6 @@ services:
       - key: MONITOR_SMTP_USER
         value: "howyoudoingkshitij@gmail.com"
       - key: MONITOR_SMTP_PASS
-        # value omitted intentionally — set this secret in the Render Dashboard
         sync: false
       - key: MONITOR_EMAIL_FROM
         value: "howyoudoingkshitij@gmail.com"
@@ -29,3 +26,5 @@ services:
         value: "2"
       - key: MONITOR_CONCURRENCY
         value: "10"
+
+    startCommand: "python monitor_multi.py --once"
