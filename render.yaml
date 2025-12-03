@@ -1,17 +1,12 @@
 services:
-  - type: cron
+  - type: worker
     name: website-monitor
-    runtime: docker
-    schedule: "*/30 * * * *"
+    runtime: python3
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python monitor_multi.py"
     envVars:
-      - key: APP_DIR
-        value: "/app"
-      - key: APP_SRC_DIR
-        value: "/app/src"
-      - key: MONITOR_DATA_DIR
-        value: "/app/data"
       - key: MONITOR_URLS_FILE
-        value: "/app/src/urls.txt"
+        value: "src/urls.txt"
       - key: MONITOR_SMTP_HOST
         value: "smtp.gmail.com"
       - key: MONITOR_SMTP_PORT
@@ -24,11 +19,3 @@ services:
         value: "howyoudoingkshitij@gmail.com"
       - key: MONITOR_EMAIL_TO
         value: "howyoudoingkshitij@gmail.com"
-      - key: MONITOR_HTTP_TIMEOUT
-        value: "10"
-      - key: MONITOR_HTTP_RETRIES
-        value: "2"
-      - key: MONITOR_RETRY_DELAY
-        value: "2"
-      - key: MONITOR_CONCURRENCY
-        value: "10"
