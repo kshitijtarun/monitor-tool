@@ -15,21 +15,31 @@ from datetime import datetime
 from typing import Tuple, Dict, List
 import concurrent.futures
 import json
+from pathlib import Path
 
 import requests
 from requests.exceptions import RequestException, Timeout, ConnectionError
 import smtplib
 from email.message import EmailMessage
 
-# ---------- Configurable via env or defaults ----------
-URLS_FILE = os.getenv("MONITOR_URLS_FILE", "/etc/monitor/urls.txt")
+# ---------- Container-friendly defaults (configurable via env) ----------
+# container base app dir
+APP_DIR = Path(os.getenv("APP_DIR", "/app"))
+DATA_DIR = Path(os.getenv("MONITOR_DATA_DIR", str(APP_DIR / "data")))
+SRC_DIR = Path(os.getenv("APP_SRC_DIR", str(APP_DIR / "src")))
+
+# ensure data dir exists early
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+URLS_FILE = os.getenv("MONITOR_URLS_FILE", str(SRC_DIR / "urls.txt"))
 CHECK_TIMEOUT = int(os.getenv("MONITOR_HTTP_TIMEOUT", "10"))
 HTTP_RETRIES = int(os.getenv("MONITOR_HTTP_RETRIES", "2"))
 RETRY_DELAY = int(os.getenv("MONITOR_RETRY_DELAY", "2"))
 CONCURRENCY = int(os.getenv("MONITOR_CONCURRENCY", "10"))  # thread pool size
 
-LOG_FILE = os.getenv("MONITOR_LOG_FILE", "/var/log/website_monitor_multi.log")
-STATE_FILE = os.getenv("MONITOR_STATE_FILE", "/var/tmp/website_monitor_multi_state.json")
+# logs/state inside data dir (writable)
+LOG_FILE = os.getenv("MONITOR_LOG_FILE", str(DATA_DIR / "website_monitor_multi.log"))
+STATE_FILE = os.getenv("MONITOR_STATE_FILE", str(DATA_DIR / "website_monitor_multi_state.json"))
 
 SMTP_HOST = os.getenv("MONITOR_SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("MONITOR_SMTP_PORT", "587"))
@@ -43,6 +53,29 @@ SEND_ON_EVERY_FAILURE = os.getenv("MONITOR_SEND_ON_EVERY_FAILURE", "false").lowe
 
 # Interval for daemon mode
 INTERVAL_SECONDS = int(os.getenv("MONITOR_INTERVAL_SECONDS", str(30*60)))
+
+# ---------- Logging ----------
+# write to stdout (container logs) + file inside DATA_DIR
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+
+# stdout handler
+sh = logging.StreamHandler()
+sh.setFormatter(formatter)
+logger.addHandler(sh)
+
+# file handler
+try:
+    fh = logging.FileHandler(LOG_FILE)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+except Exception:
+    logger.exception("Unable to create file handler for log; continuing with stdout only")
+
+# alias logging
+logging = logger
+
 
 # ---------- Logging ----------
 logging.basicConfig(

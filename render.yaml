@@ -4,6 +4,12 @@ services:
     runtime: docker
     schedule: "*/30 * * * *"
     envVars:
+      - key: APP_DIR
+        value: "/app"
+      - key: APP_SRC_DIR
+        value: "/app/src"
+      - key: MONITOR_DATA_DIR
+        value: "/app/data"
       - key: MONITOR_URLS_FILE
         value: "/app/src/urls.txt"
       - key: MONITOR_SMTP_HOST
@@ -26,5 +32,3 @@ services:
         value: "2"
       - key: MONITOR_CONCURRENCY
         value: "10"
-
-    startCommand: "python monitor_multi.py --once"
